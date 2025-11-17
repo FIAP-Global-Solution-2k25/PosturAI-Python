@@ -2,13 +2,27 @@ import cv2 # Para capturar a câmera e mostrar as imagens
 import mediapipe as mp # Presets das partes do corpo
 import math # Pros calculos matemáticos
 
-historico_projecao = []  # lista para suavizar os valores
-TAMANHO_JANELA = 10 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
+# Determina um número maximo de 5 de caracteres pra lista, removendo com pop caso supere o limite
+def atualizar_historico(lista, valor, limite):
+    lista.append(valor)
+    if len(lista) > limite:
+        lista.pop(0)
 
-SENSIBILIDADE_PROJECAO = 0.08 # Limite que diferencia a cabeça normal da inclinada (usando nariz/orelhas)
+historico_frontal = []  # Lista para suavizar os valores
+historico_lateral = []  # Mesma coisa
+
+TAMANHO_JANELA_FRONTAL = 10 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
+TAMANHO_JANELA_LATERAL = 10 # Mesma coisa
+
+SENSIBILIDADE_PROJ_FRONTAL = 0.08 # Limite que diferencia a cabeça normal da inclinada
+SENSIBILIDADE_PROJ_LATERAL = 0.03 # Mesma coisa
+
+LIMIAR_SUAVIZACAO_LATERAL = 0.6 # Percentual minimo de inclinacao lateral para confirmar postura ruim
 
 contador_postura_ruim = 0 
-LIMITAR_FRAMES = 30  # 1 segundo = 15fps
+
+LIMIAR_FRAMES_FRONTAL = 30 # 1 segundo = 15fps
+LIMIAR_FRAMES_LATERAL = 60 # Mesma coisa
 
 mp_pose = mp.solutions.pose              # Acesso ao modulo de poses
 pose = mp_pose.Pose()                    # Criação do detector de poses
@@ -38,43 +52,64 @@ while True: # Toda aplicação de visão computacional roda em cima desse loop
         cabeca = landmarks[mp_pose.PoseLandmark.NOSE] # Pega a cabeça (nariz)
         ombro_esq = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER] # Pega o ombro esquerdo
         ombro_dir = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER] # Pega o ombro direito
+        orelha_esq = landmarks[mp_pose.PoseLandmark.LEFT_EAR] # Pega a orelha esquerda
+        orelha_dir = landmarks[mp_pose.PoseLandmark.RIGHT_EAR] # Pega a orelha direita
+
+        # ============= Verificação de Inclinação Frontal ==============
 
         projecao = ((ombro_dir.z + ombro_esq.z) / 2) - cabeca.z # Mede a diferença entre a media dos ombros e a inclinação da cabeça
 
-        historico_projecao.append(projecao)
-
-        # Deixa o historico de projeção com 5 numeros, removendo os demais caso passe de 5
-        if len(historico_projecao) > TAMANHO_JANELA:
-            historico_projecao.pop(0)
+        # Usa função auxiliar pra 
+        atualizar_historico(historico_frontal, projecao, TAMANHO_JANELA_FRONTAL)
 
         # Calcula a média suavizada usando a lista historico_projecao
-        projecao_suave = sum(historico_projecao) / len(historico_projecao)
-        print("projecao:", projecao, " | suave:", projecao_suave)
-
-        # Verificação da distancia entre os ombros e o nariz não eram o suficiente então precisei das orelhas também
-        orelha_esq = landmarks[mp_pose.PoseLandmark.LEFT_EAR]
-        orelha_dir = landmarks[mp_pose.PoseLandmark.RIGHT_EAR]
+        projecao_frontal_suave = sum(historico_frontal) / len(historico_frontal)
+        #print("projecao:", projecao, " | suave:", projecao_frontal_suave) Debug pra calibrar a projeção frontal
 
         # Calcula a distância entre a orelha e o nariz, que mudam por conta da inclinação da cabeça
         diferenca_y = cabeca.y - ((orelha_esq.y + orelha_dir.y) / 2)
 
         # Verifica a postura usando o nariz (cabeca) e a orelha
-        cabeca_inclinada_por_angulo = diferenca_y > SENSIBILIDADE_PROJECAO
+        cabeca_inclinada_por_angulo = diferenca_y > SENSIBILIDADE_PROJ_FRONTAL
 
-        # Define a detecção final
-        cabeca_final = cabeca_inclinada_por_angulo
+        # ============ Verificação de Inclinação Lateral ================
 
-        # ===========================================================
+        dif_lateral = abs(orelha_esq.y - orelha_dir.y) # Mede a diferença entre a altura das olheiras e mantem o valor sempre positivo com abs
+
+        cabeca_inclinada_lateral = dif_lateral > SENSIBILIDADE_PROJ_LATERAL # Verifica se a cabeça esta inclinada com base na sensibilidade
+
+        # Usando a função auxiliar pra manter somente 5 nums na lista
+        atualizar_historico(historico_lateral, 1 if cabeca_inclinada_lateral else 0, TAMANHO_JANELA_LATERAL)
+
+        media_lateral = sum(historico_lateral) / len(historico_lateral) # Calcula a média na lista de projeção
+
+        cabeca_lateral_estavel = media_lateral > LIMIAR_SUAVIZACAO_LATERAL
+
+        # Verificação da direção da inclinação da cabeça
+        if cabeca_inclinada_lateral:
+            if orelha_esq.y < orelha_dir.y:
+                direcao = "esquerda"
+            else:
+                direcao = "direita"
+        else:
+            direcao = None
+
+        if cabeca_lateral_estavel and direcao:
+            cv2.putText(frame, f"Cabeca inclinada para {direcao}",
+                (30, 150), cv2.FONT_HERSHEY_SIMPLEX,
+                1.0, (0, 0, 255), 2)
 
         # Soma os frames com a postura ruim e os zera caso melhore
-        if cabeca_final:
+        if cabeca_inclinada_por_angulo:
             contador_postura_ruim += 1
         else:
             contador_postura_ruim = 0  
-            historico_projecao.clear()
+            historico_frontal.clear()
 
         # Só confirma a cabeça projetada se ficar ruim por X frames seguidos (definidos la em cima)
-        cabeca_final_estavel = contador_postura_ruim >= LIMITAR_FRAMES
+        cabeca_final_estavel = contador_postura_ruim >= LIMIAR_FRAMES_FRONTAL
+
+        # ===============================================================
 
         if cabeca_final_estavel: 
             cv2.putText(frame, "Cabeca projetada para frente", # Insere um texto dentro da imagem
@@ -90,7 +125,8 @@ while True: # Toda aplicação de visão computacional roda em cima desse loop
     else:
         # Caso o usuário saia da câmera ele limpa o histórico de posturas, evitando um aviso desnecessário na tela
         contador_postura_ruim = 0
-        historico_projecao.clear()
+        historico_frontal.clear()
+        historico_lateral.clear()
 
     cv2.imshow("PosturAI - Camera", frame)
 
