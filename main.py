@@ -5,7 +5,7 @@ import math # Pros calculos matemáticos
 historico_projecao = []  # lista para suavizar os valores
 TAMANHO_JANELA = 10 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
 
-SENSIBILIDADE_PROJECAO = 0.07 # Limite que diferencia a cabeça normal da inclinada (usando nariz/orelhas)
+SENSIBILIDADE_PROJECAO = 0.08 # Limite que diferencia a cabeça normal da inclinada (usando nariz/orelhas)
 
 contador_postura_ruim = 0 
 LIMITAR_FRAMES = 30  # 1 segundo = 15fps
@@ -56,7 +56,7 @@ while True: # Toda aplicação de visão computacional roda em cima desse loop
         orelha_dir = landmarks[mp_pose.PoseLandmark.RIGHT_EAR]
 
         # Calcula a distância entre a orelha e o nariz, que mudam por conta da inclinação da cabeça
-        diferenca_y = ((orelha_esq.y + orelha_dir.y) / 2) - cabeca.y
+        diferenca_y = cabeca.y - ((orelha_esq.y + orelha_dir.y) / 2)
 
         # Verifica a postura usando o nariz (cabeca) e a orelha
         cabeca_inclinada_por_angulo = diferenca_y > SENSIBILIDADE_PROJECAO
