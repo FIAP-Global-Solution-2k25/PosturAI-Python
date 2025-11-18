@@ -429,7 +429,7 @@ perc_dist = (dados["distancia"].sum() / total_frames) * 100
 # ======== DADOS REAIS PARA O O RADAR ========
 
 # Labels organizados para respeitar a posição no gráfico (cima, direita, baixo, esquerda)
-labels = ["Frente", "Distância", "Trás", "Laterais"]
+labels = ["Frente", "Distância", "Trás", "Lateral"]
 
 # Valores associados pra cada label na mesma ordem
 values = [perc_frente, perc_dist, perc_tras, perc_lateral]
