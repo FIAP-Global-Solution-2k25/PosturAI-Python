@@ -109,7 +109,111 @@ def definir_icone_janela(caminho_icone):
         # Define ícone grande e pequeno da janela
         win32gui.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_BIG, icon)
         win32gui.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_SMALL, icon)
-# ========================================================================
+
+# ===================== Gráfico 3D =====================
+
+def gerar_relatorio_postura():
+    # Otimização pra carregar mais rapido as bibliotecas 
+    from numpy import array, append, deg2rad
+    from matplotlib.pyplot import figure, subplot, show, title, subplots_adjust
+
+    dados = pd.read_csv("uso_postura.csv")
+
+    # Total de frames processados para calcular os percentuais
+    total_frames = len(dados)
+
+    # Calcula o percentual de postura ruim para cada categoria
+    perc_frente = (dados["frente"].sum() / total_frames) * 100
+    perc_tras = (dados["tras"].sum() / total_frames) * 100
+    perc_lateral = (dados["lateral"].sum() / total_frames) * 100
+    perc_dist = (dados["distancia"].sum() / total_frames) * 100
+
+    # ======== DADOS REAIS PARA O O RADAR ========
+
+    # Labels organizados para respeitar a posição no gráfico (cima, direita, baixo, esquerda)
+    labels = ["Frente", "Distância", "Trás", "Lateral"]
+
+    # Valores associados pra cada label na mesma ordem
+    values = [perc_frente, perc_dist, perc_tras, perc_lateral]
+
+    # Converte a lista em um array do np e adiciona o primeiro valor no final pra fechar o gráfico
+    values = array(values, dtype=float)
+    values = append(values, values[0])
+
+    # Define manualmente os angulos para colocar cada label exatamente onde eu queria
+    angles = deg2rad([90, 0, 270, 180, 90])
+
+    # ======== IMAGEM ========
+
+    # Define o tamanho da imagem do gráfico
+    fig = figure(figsize=(4.5, 3.8))
+
+    # Cria o gráfico polar, com o circulo parecendo um radar 
+    ax = subplot(111, polar=True) # 111 significa 1 linha, 1 coluna, posição 1.
+
+    # Cor do fundo do gráfico
+    ax.set_facecolor("#f6f7fa")
+
+    # Posiciona os textos em volta do radar conforme os ângulos que definimos acima
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels, fontsize=11, color="gray")
+
+    # Margens laterais específicas para 'lateral' e 'distância'
+    for label, angle in zip(ax.get_xticklabels(), angles[:-1]):
+        text = label.get_text()
+
+        # Aumenta a distância do texto para o centro só nos lados
+        if text == "Distância":       # lado direito
+            label.set_horizontalalignment("left")
+            label.set_x(label.get_position()[0] + 0.5)
+
+        elif text == "Lateral":       # lado esquerdo
+            label.set_horizontalalignment("right")
+            label.set_x(label.get_position()[0] - 0.5)
+
+    # Pega todos os textos posicionados nas direções
+    xticks = ax.get_xticklabels()
+
+    # Define a escala do eixo radial (círculos internos)
+    ax.set_yticks([20, 40, 60, 80, 100])
+    ax.set_yticklabels(["", "", "", "", ""]) # Tiramos os números pra ficar mais bonito
+
+    # Ajusta a beleza dos marcadores (ticks)
+    ax.tick_params(axis="y", labelsize=8)
+
+    # ======== GRADIENTE DO GRÁFICO ========
+
+    # Cria o efeito de profundidade com varias camadas (otimizado)
+    for i in range(40):  # antes era 90 – reduzido para acelerar sem alterar aparência
+        t = i / 40                 # Intensidade progressiva
+        fade = values * t          # Valores multiplicados para efeito de subida
+        ax.fill(angles, fade, color=(0.3, 0.0, 0.9, 0.018), zorder=i)
+
+    # Contorno principal do radar
+    ax.plot(angles, values, color="#6d00ff", linewidth=2)
+
+    # Preenchimento interno
+    ax.fill(angles, values, color=(0.4, 0.1, 0.9, 0.35))
+
+    # Marcações brancas nos pontos finais
+    ax.scatter(angles[:-1], values[:-1], color="white", s=40,
+            edgecolor="#6d00ff", linewidth=1.5)
+
+    # Tira a borda redonda padrão do gráfico
+    ax.spines["polar"].set_visible(False)
+
+    # Aumenta o espaço em cima pra caber o título
+    subplots_adjust(top=0.78)
+    # Aumenta o espaço lateral para caber melhor as palavras Lateral e Distância
+    subplots_adjust(left=0.18, right=0.78)
+
+    # Título do gráfico
+    title("Relatório de uso - PosturAI", fontsize= 12, fontweight="bold", pad=20)
+
+    # Mostra o gráfico final
+    show()
+
+# ====================================================
 
 # Lista para suavizar os valores
 historico_frontal = []  
@@ -409,86 +513,4 @@ df = pd.DataFrame(
 )
 df.to_csv("uso_postura.csv", index=False)
 
-# ===================== Gráfico 3D =====================
-
-# Otimização pra carregar mais rapido as bibliotecas 
-from numpy import array, append, deg2rad
-from matplotlib.pyplot import figure, subplot, show, title, subplots_adjust
-
-dados = pd.read_csv("uso_postura.csv")
-
-# Total de frames processados para calcular os percentuais
-total_frames = len(dados)
-
-# Calcula o percentual de postura ruim para cada categoria
-perc_frente = (dados["frente"].sum() / total_frames) * 100
-perc_tras = (dados["tras"].sum() / total_frames) * 100
-perc_lateral = (dados["lateral"].sum() / total_frames) * 100
-perc_dist = (dados["distancia"].sum() / total_frames) * 100
-
-# ======== DADOS REAIS PARA O O RADAR ========
-
-# Labels organizados para respeitar a posição no gráfico (cima, direita, baixo, esquerda)
-labels = ["Frente", "Distância", "Trás", "Lateral"]
-
-# Valores associados pra cada label na mesma ordem
-values = [perc_frente, perc_dist, perc_tras, perc_lateral]
-
-# Converte a lista em um array do np e adiciona o primeiro valor no final pra fechar o gráfico
-values = array(values, dtype=float)
-values = append(values, values[0])
-
-# Define manualmente os angulos para colocar cada label exatamente onde eu queria
-angles = deg2rad([90, 0, 270, 180, 90])
-
-# ======== IMAGEM ========
-
-# Define o tamanho da imagem do gráfico
-fig = figure(figsize=(4, 4))
-
-# Cria o gráfico polar, com o circulo parecendo um radar 
-ax = subplot(111, polar=True) # 111 significa 1 linha, 1 coluna, posição 1.
-
-# Cor do fundo do gráfico
-ax.set_facecolor("#f6f7fa")
-
-# Posiciona os textos em volta do radar conforme os ângulos que definimos acima
-ax.set_xticks(angles[:-1])
-ax.set_xticklabels(labels, fontsize=11, color="gray")
-
-# Define a escala do eixo radial (círculos internos)
-ax.set_yticks([20, 40, 60, 80, 100])
-ax.set_yticklabels(["", "", "", "", ""]) # Tiramos os números pra ficar mais bonito
-
-# Ajusta a beleza dos marcadores (ticks)
-ax.tick_params(axis="y", labelsize=8)
-
-# ======== GRADIENTE DO GRÁFICO ========
-
-# Cria o efeito de profundidade com varias camadas
-for i in range(90):
-    t = i / 90                 # Intensidade progressiva
-    fade = values * t          # Valores multiplicados para efeito de subida
-    ax.fill(angles, fade, color=(0.3, 0.0, 0.9, 0.018), zorder=i)
-
-# Contorno principal do radar
-ax.plot(angles, values, color="#6d00ff", linewidth=2)
-
-# Preenchimento interno
-ax.fill(angles, values, color=(0.4, 0.1, 0.9, 0.35))
-
-# Marcações brancas nos pontos finais
-ax.scatter(angles[:-1], values[:-1], color="white", s=40,
-           edgecolor="#6d00ff", linewidth=1.5)
-
-# Tira a borda redonda padrão do gráfico
-ax.spines["polar"].set_visible(False)
-
-# Aumenta o espaço em cima pra caber o título
-subplots_adjust(top=0.78)
-
-# Título do gráfico
-title("Relatório de uso - PosturAI", fontsize=12, fontweight="bold", pad=20)
-
-# Mostra o gráfico final
-show()
+gerar_relatorio_postura()
