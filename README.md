@@ -110,8 +110,8 @@ Após encerrar a captura:
 
 ## 👥 Autores
 
-- **Ulisses Ribeiro** — Desenvolvimento técnico da solução em geral.
-- **Arthur Berlofa Bosi** — Desenvolvimento da integração com o Arduino e arquivos JSON.
+- **Ulisses Ribeiro** — Desenvolvimento *core* e arquitetura técnica da solução em Visão Computacional.
+- **Arthur Berlofa Bosi** — Responsável pela integração IoT (ESP32) e pela gestão de configuração via arquivos JSON.
 
 ---
 
