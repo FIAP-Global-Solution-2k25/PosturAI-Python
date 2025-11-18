@@ -2,6 +2,9 @@ import cv2 # Para capturar a câmera e mostrar as imagens
 import mediapipe as mp # Presets das partes do corpo
 import math # Pros calculos matemáticos
 
+import matplotlib.pyplot as plt # Pra plotar os graficos de uso
+import pandas as pd # Pra fazer a leitura dos dados em csv
+
 # ======== Funções auxiliares ========
 
 # Determina um número maximo de caracteres pra lista, removendo com pop caso supere o limite
@@ -117,7 +120,7 @@ historico_tras = []
 
 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
 TAMANHO_JANELA_FRONTAL = 5 
-TAMANHO_JANELA_LATERAL = 20 
+TAMANHO_JANELA_LATERAL = 20
 TAMANHO_JANELA_TRAS = 6
 
 # Limite que diferencia a cabeça normal da inclinada
@@ -164,6 +167,10 @@ try: # Tenta executar a tarefa
     definir_icone_janela("logo-posturAI.ico") # Chama a função que muda a imagem da janela do projeto
 except Exception as e: # Se algo ocorrer, retorna uma mensagem
     print("Erro ao definir ícone:", e)
+
+# Cria ou zera o arquivo CSV a cada execução
+with open("uso_postura.csv", "w", encoding="utf-8") as f:
+    f.write("frame,frente,tras,lateral,distancia\n")
 
 try:
     while True: # Toda aplicação de visão computacional roda em cima desse loop
@@ -348,6 +355,10 @@ try:
             "distancia": postura_distancia_ruim
         }
 
+        # Salva o registro do frame no CSV
+        with open("uso_postura.csv", "a", encoding="utf-8") as f:
+            f.write(f"{frame_index},{int(postura_frente_ruim)},{int(postura_tras_ruim)},{int(postura_lateral_ruim)},{int(postura_distancia_ruim)}\n")
+
         try:
             desenhar_barra_status(frame, status_postura) # Função que coleta o status_postura e caso sejam True, são printados
 
@@ -363,7 +374,7 @@ try:
         # Contador de frames processados (útil para debug)
         frame_index += 1
 
-        # Caso o usuário aperte a tecla q ele quita do sistema
+        # Caso o usuário aperte a tecla 'q' ele quita do sistema
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -375,3 +386,116 @@ cam.release()
 
 # Fecha as abas abertas pelo OpenCV
 cv2.destroyAllWindows()
+
+# ===================== RELATÓRIO GRÁFICO APRIMORADO + PERCENTUAIS =====================
+try:
+    from matplotlib.offsetbox import AnchoredOffsetbox, VPacker, TextArea # Importa classes para criar as caixas flutuantes do gráfico
+
+    dados = pd.read_csv("uso_postura.csv") # Lê o arquivo CSV que a gente cria quando inicia o sistema
+
+    # --------- Calculo das porcentagens ---------
+
+    total_frames = len(dados)  # Total de frames analisados durante a transimissão
+
+    perc_frente = (dados["frente"].sum() / total_frames) * 100  # % de inclinação pra frente
+    perc_tras = (dados["tras"].sum() / total_frames) * 100  # % de inclinação pra trás
+    perc_lateral = (dados["lateral"].sum() / total_frames) * 100  # % de inclinação lateral
+    perc_distancia = (dados["distancia"].sum() / total_frames) * 100  # % de dintancia do usuario
+
+    # Define postura "boa" quando não há nenhuma inclinação detectada (ou seja, apenas 0s)
+    dados["boa"] = (
+        (dados["frente"] == 0) &
+        (dados["tras"] == 0) &
+        (dados["lateral"] == 0) &
+        (dados["distancia"] == 0)
+    ).astype(int) # Interpreta esses zeros como ints
+
+    perc_boa = (dados["boa"].sum() / total_frames) * 100 # % de postura certa
+    perc_ruim = 100 - perc_boa # % total de postura ruim
+
+    # ---------------- GRÁFICO ----------------
+
+    plt.figure(figsize=(12, 7)) # Tamanho da figura do gráfico
+
+    plt.plot(dados["frame"], dados["frente"], label="Frente", linewidth=2) # Linha azul do gráfico (frente)
+    plt.plot(dados["frame"], dados["tras"], label="Trás", linewidth=2) # Linha laranja do gráfico (tras)
+    plt.plot(dados["frame"], dados["lateral"], label="Lateral", linewidth=2) # Linha verde do gráfico (lateral)
+    plt.plot(dados["frame"], dados["distancia"], label="Distância", linewidth=2) # Linha roxa do gráfico (distante)
+
+    # Informações do plot, como o Título do grafico e as info dos eixos x e y
+    plt.title("Relatório de Uso do Sistema PosturAI", fontsize=16, fontweight="bold") # Título
+    plt.xlabel("Frame", fontsize=13) # Label do eixo X
+    plt.ylabel("Postura Ruim (1 = sim)", fontsize=13) # Label do eixo Y
+
+    plt.ylim(-0.1, 1.1)  # Limites do eixo Y
+    plt.yticks([0, 1], ["Boa", "Ruim"])  # Converte binario para texto (0,1) pra (sim,nao)
+    plt.grid(True, linestyle="--", alpha=0.3)  # Ativa a borda
+
+    # ================== LEGENDA ORIGINAL ==================
+    leg = plt.legend(
+        loc="upper left",          # Posição no canto superior esquerdo
+        bbox_to_anchor=(1.06, 1.0),  # Joga pra fora do gráfico
+        borderaxespad=0,            # Remove o espaçamento que sobra
+    )
+
+    cor_borda = "#616161" # Cor ajustavel da borda da legenda
+
+    leg.get_frame().set_edgecolor(cor_borda) # Define cor da borda da legenda
+    leg.get_frame().set_linewidth(1.4) # Espessura da borda
+    leg.get_frame().set_boxstyle("square", pad=0.6) # Estilo da caixa (quadrada)
+
+    legend_width = leg.get_frame().get_width()  # pega a largura da caixa da legenda
+
+    # ================= BLOCO DAS PORCENTAGENS ==================++
+
+    cores = {
+        "boa": (0, 0.6, 0),                 # Cor verde
+        "frente": (0.121, 0.466, 0.705),    # Azul
+        "tras": (1.0, 0.498, 0.054),        # Laranja
+        "lateral": (0.172, 0.627, 0.172),   # Verde
+        "distancia": (0.5, 0.0, 0.5),       # Roxo
+        "ruim": (0.8, 0, 0)                 # Vermelho
+    }
+
+    # Padronização das linhas, com as variáveis de porcentagem e as cores antes estabelecidas
+    linhas = [
+        (f"Postura Boa: {perc_boa:.1f}%", cores["boa"]),                      # Linha Verde
+        (f"Inclinação Frente: {perc_frente:.1f}%", cores["frente"]),          # Linha azul
+        (f"Inclinação Trás: {perc_tras:.1f}%", cores["tras"]),                # Linha laranja
+        (f"Inclinação Lateral: {perc_lateral:.1f}%", cores["lateral"]),       # Linha verde
+        (f"Distância Incorreta: {perc_distancia:.1f}%", cores["distancia"]),  # Linha roxa
+        (f"Postura Ruim Total: {perc_ruim:.1f}%", cores["ruim"]),             # Linha vermelha
+    ]
+
+    items = [] # Lista onde cada linha colorida será inserida
+    for texto, cor in linhas:
+        items.append(
+            TextArea(texto, textprops=dict(color=cor, fontsize=11))  # Cria a caixa de texto colorida
+        )
+
+    box = VPacker(children=items, align="left", pad=0, sep=4)  # Empilha os itens da caixa verticalmente com espaçamento de 4px
+
+    caixa = AnchoredOffsetbox(
+        loc="upper left",                     # Posição relativa
+        child=box,                            # Conteúdo é o empilhamento vertical
+        pad=0.4,                              # Padding interno
+        borderpad=0.6,                        # Padding da borda
+        frameon=True,                         # Ativa a borda ao redor
+        bbox_to_anchor=(1.05, 0.78),          # Alinhamento lateral e deslocamento vertical
+        bbox_transform=plt.gca().transAxes,   # Transforma para coordenadas do gráfico
+    )
+
+    caixa.patch.set_edgecolor(cor_borda)      # Coloca mesma borda da legenda
+    caixa.patch.set_linewidth(1.4)            # Mesma espessura de borda
+    caixa.patch.set_facecolor("white")        # Fundo branco
+    caixa.patch.set_boxstyle("square", pad=0.6) # Formato da caixa
+
+    caixa.patch.set_width(legend_width)  # Força a mesma largura da caixa da legenda
+
+    plt.gca().add_artist(caixa)  # Adiciona a caixa no gráfico
+
+    plt.subplots_adjust(right=0.75) # Abre espaço na direita pra caber as caixas 
+    plt.show() # Finalmente exibe o gráfico
+
+except Exception as e:
+    print(e, "Não foi possível exibir o gráfico") # Pega erros printa uma mensagem de precaução
