@@ -87,6 +87,29 @@ def always_on_top():
         )
 # ================================================================================
 
+# ===================== Ícone personalizado da janela =====================
+import win32gui
+import win32con
+import win32api
+
+# Cria a janela antes de tudo (OpenCV só cria no primeiro imshow)
+cv2.namedWindow("PosturAI - Camera", cv2.WINDOW_NORMAL)
+
+def definir_icone_janela(caminho_icone):
+    hwnd = win32gui.FindWindow(None, "PosturAI - Camera")
+    if hwnd:
+        icon = win32gui.LoadImage(
+            None,
+            caminho_icone,
+            win32con.IMAGE_ICON,
+            0, 0,
+            win32con.LR_LOADFROMFILE
+        )
+        # Define ícone grande e pequeno da janela
+        win32gui.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_BIG, icon)
+        win32gui.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_SMALL, icon)
+# ========================================================================
+
 # Lista para suavizar os valores
 historico_frontal = []  
 historico_lateral = []  
@@ -126,6 +149,9 @@ cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)  
 
 frame_index = 0  # Como os landmarks (marcacoes do corpo) comecam instaveis, ele nao mostra os primeiros (deixando mais rapido)
+
+# Chama a função que muda a imagem da janela do projeto
+definir_icone_janela("logo-posturAI.ico")
 
 while True: # Toda aplicação de visão computacional roda em cima desse loop
 
