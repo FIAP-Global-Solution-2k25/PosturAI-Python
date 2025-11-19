@@ -1,7 +1,14 @@
 {
-    "modo-deteccao": "teste",
-    "tempo-ativacao": 30,
-    "always-on-top": true,
-    "tem-cadeira-IoT": true
+    "niveis_sensibilidade": ["fraco", "moderado", "forte"],
+    "sensibilidade": "moderado",
+    "hardware": {
+        "tem_cadeira_iot": false,
+        "ip_cadeira_iot": "0.tcp.sa.ngrok.io:13950",
+        "id_cadeira_iot": "Chair:001",
+        "atraso_vibracao": 10
+    },
+    "interface": {
+        "janela_sempre_topo": true,
+        "gerar_grafico_apos_encerramento": true
+    }
 }
-
