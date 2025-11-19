@@ -1,6 +1,7 @@
 {
     "modo-deteccao": "teste",
     "tempo-ativacao": 30,
-    "always-on-top": true
+    "always-on-top": true,
+    "tem-cadeira-IoT": true
 }
 

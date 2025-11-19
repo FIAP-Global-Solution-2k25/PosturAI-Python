@@ -1,7 +1,10 @@
-import cv2 # Para capturar a câmera e mostrar as imagens 
+from sys import exception
+
+import cv2 # Para capturar a câmera e mostrar as imagens
 import mediapipe as mp # Presets das partes do corpo
 import math # Pros calculos matemáticos
 import pandas as pd # Pra leitura do arquivo csv
+import requests # Biblioteca para comunicação com o ESP32
 
 # ======== Funções auxiliares ========
 
@@ -26,6 +29,42 @@ def limpar_historicos():
     historico_lateral.clear()
     historico_tras.clear()
 
+# Comunicação com a Cadeira IoT
+def comunicaESP32(status):
+    url = 'http://0.tcp.sa.ngrok.io:13950/v2/entities/urn:ngsi-ld:Chair:001/attrs'
+
+    headers = {
+        'Content-Type': 'application/json',
+        'fiware-service': 'smart',
+        'fiware-servicepath': '/'
+    }
+
+    payloadON = {
+        "on": {
+        "type" : "command",
+        "value" : ""
+        }
+    }
+
+    payloadOFF = {
+        "off": {
+        "type" : "command",
+        "value" : ""
+        }
+    }
+
+    if status == 'on':
+        try:
+            requests.patch(url, headers=headers, json=payloadON)
+        except Exception as e:
+            print(e)
+    elif status == 'off':
+        try:
+            requests.patch(url, headers=headers, json=payloadOFF)
+        except Exception as e:
+            print(e)
+
+
 # ===================== Barra de status elegante no topo =====================
 
 def desenhar_barra_status(frame, status_dict):
@@ -48,11 +87,25 @@ def desenhar_barra_status(frame, status_dict):
     if status_dict["distancia"]:
         textos.append("Longe")
 
+    # Aqui vão entrar os comandos da integração com o arduino
+    # Cria uma funcao especifica pra chamar o arduino e chama ela aqui dentro
+    global historico_vibrar
+
+    historico_vibrar.append(True if textos else False)
+    print(historico_vibrar)
+
+    if all(historico_vibrar[-10:]):
+        comunicaESP32('on')
+        textos.append("Chair: ON")
+        historico_vibrar = []
+    else:
+        comunicaESP32('off')
+        textos.append("Chair: OFF")
+
+
     # Adiciona entre as posturas ruins uma barra vertical, se não, postura ok
     texto_final = " | ".join(textos) if textos else "Postura OK"
 
-    # Aqui vão entrar os comandos da integração com o arduino
-    # Cria uma funcao especifica pra chamar o arduino e chama ela aqui dentro
 
     # Define as cores dos textos, se tiver um item na lista vermelho, se não postura ta boa (cor verde)
     cor = (0, 0, 255) if textos else (0, 255, 0)
@@ -218,7 +271,8 @@ def gerar_relatorio_postura():
 # Lista para suavizar os valores
 historico_frontal = []  
 historico_lateral = []  
-historico_tras = [] 
+historico_tras = []
+historico_vibrar = []
 
 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
 TAMANHO_JANELA_FRONTAL = 5 
@@ -261,8 +315,8 @@ cv2.setUseOptimized(True)                # Ativa otimizações do próprio OpenC
 cv2.setNumThreads(4)                     # Começa a processar certas operações de forma assincrona, deixando também mais rapido o inicio
 
 # Definimos a resolução da webcam (largura e altura)
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)   
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)  
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 300)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
 mp_pose = mp.solutions.pose              # Acesso ao modulo de poses
 pose = mp_pose.Pose(
