@@ -1,10 +1,9 @@
-from sys import exception
-
 import cv2 # Para capturar a câmera e mostrar as imagens
 import mediapipe as mp # Presets das partes do corpo
 import math # Pros calculos matemáticos
 import pandas as pd # Pra leitura do arquivo csv
 import requests # Biblioteca para comunicação com o ESP32
+import json # Biblioteca para ler arquivos .JSON
 
 # ======== Funções auxiliares ========
 
@@ -31,7 +30,10 @@ def limpar_historicos():
 
 # Comunicação com a Cadeira IoT
 def comunicaESP32(status):
-    url = 'http://0.tcp.sa.ngrok.io:13950/v2/entities/urn:ngsi-ld:Chair:001/attrs'
+    ip_cadeira_iot = USER_CONFIG['hardware']['ip_cadeira_iot']
+    id_cadeira_iot = USER_CONFIG['hardware']['id_cadeira_iot']
+
+    url = f'http://{ip_cadeira_iot}/v2/entities/urn:ngsi-ld:{id_cadeira_iot}/attrs'
 
     headers = {
         'Content-Type': 'application/json',
@@ -64,6 +66,9 @@ def comunicaESP32(status):
         except Exception as e:
             print(e)
 
+def le_json(path):
+    with open(path, 'r', encoding='utf-8') as json_file:
+        return json.load(json_file)
 
 # ===================== Barra de status elegante no topo =====================
 
@@ -89,18 +94,21 @@ def desenhar_barra_status(frame, status_dict):
 
     # Aqui vão entrar os comandos da integração com o arduino
     # Cria uma funcao especifica pra chamar o arduino e chama ela aqui dentro
-    global historico_vibrar
+    if USER_CONFIG['hardware']['tem_cadeira_iot']:
+        global historico_vibrar
 
-    historico_vibrar.append(True if textos else False)
-    print(historico_vibrar)
+        historico_vibrar.append(True if textos else False)
+        #print(historico_vibrar)
 
-    if all(historico_vibrar[-10:]):
-        comunicaESP32('on')
-        textos.append("Chair: ON")
-        historico_vibrar = []
-    else:
-        comunicaESP32('off')
-        textos.append("Chair: OFF")
+        atraso_vibracao = USER_CONFIG['hardware']['atraso_vibracao']
+
+        if all(historico_vibrar[-atraso_vibracao:]):
+            comunicaESP32('on')
+            textos.append("Chair: ON")
+            historico_vibrar = []
+        else:
+            comunicaESP32('off')
+            textos.append("Chair: OFF")
 
 
     # Adiciona entre as posturas ruins uma barra vertical, se não, postura ok
@@ -269,27 +277,82 @@ def gerar_relatorio_postura():
 # ====================================================
 
 # Lista para suavizar os valores
-historico_frontal = []  
-historico_lateral = []  
+historico_frontal = []
+historico_lateral = []
 historico_tras = []
 historico_vibrar = []
 
+# JSON com as configurações do usuário
+USER_CONFIG = le_json("preferences.json")
+
+# Dicionario contendo os níveis de sensibilidade, para que o usuario quem decida por meio do .JSON
+CONFIGURACOES_SENSIBILIDADE = {
+    "fraco": {
+        # --- Limiares de Posição (Tolerância a desvio - Quanto MAIOR, menos sensível)
+        "SENSIBILIDADE_PROJ_FRONTAL": 0.12,
+        "SENSIBILIDADE_PROJ_LATERAL": 0.04,
+        "SENSIBILIDADE_PROJ_TRAS": 0.008,
+
+        # --- Janelas de Suavização (Tamanho do histórico para média - Quanto MAIOR, mais suave)
+        "TAMANHO_JANELA_FRONTAL": 30,
+        "TAMANHO_JANELA_LATERAL": 30,
+        "TAMANHO_JANELA_TRAS": 12,
+
+        # --- Limites de Duração (Frames consecutivos para confirmar o alerta - Quanto MAIOR, mais lento)
+        "LIMIAR_FRAMES_FRONTAL": 60,
+        "LIMIAR_FRAMES_LATERAL": 60,
+        "LIMIAR_FRAMES_TRAS": 60
+    },
+    "moderado": {
+        # --- Limiares de Posição
+        "SENSIBILIDADE_PROJ_FRONTAL": 0.08,
+        "SENSIBILIDADE_PROJ_LATERAL": 0.02,
+        "SENSIBILIDADE_PROJ_TRAS": 0.005,
+
+        # --- Janelas de Suavização
+        "TAMANHO_JANELA_FRONTAL": 15,
+        "TAMANHO_JANELA_LATERAL": 20,
+        "TAMANHO_JANELA_TRAS": 6,
+
+        # --- Limites de Duração
+        "LIMIAR_FRAMES_FRONTAL": 30,
+        "LIMIAR_FRAMES_LATERAL": 30,
+        "LIMIAR_FRAMES_TRAS": 30
+    },
+    "forte": {
+        # --- Limiares de Posição
+        "SENSIBILIDADE_PROJ_FRONTAL": 0.04,
+        "SENSIBILIDADE_PROJ_LATERAL": 0.008,
+        "SENSIBILIDADE_PROJ_TRAS": 0.002,
+
+        # --- Janelas de Suavização
+        "TAMANHO_JANELA_FRONTAL": 5,
+        "TAMANHO_JANELA_LATERAL": 10,
+        "TAMANHO_JANELA_TRAS": 3,
+
+        # --- Limites de Duração
+        "LIMIAR_FRAMES_FRONTAL": 15,
+        "LIMIAR_FRAMES_LATERAL": 15,
+        "LIMIAR_FRAMES_TRAS": 15
+    }
+}
+
 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
-TAMANHO_JANELA_FRONTAL = 5 
-TAMANHO_JANELA_LATERAL = 20
-TAMANHO_JANELA_TRAS = 6
+TAMANHO_JANELA_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_FRONTAL"]
+TAMANHO_JANELA_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_LATERAL"]
+TAMANHO_JANELA_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_TRAS"]
 
 # Limite que diferencia a cabeça normal da inclinada
-SENSIBILIDADE_PROJ_FRONTAL = 0.08 
-SENSIBILIDADE_PROJ_LATERAL = 0.02 
-SENSIBILIDADE_PROJ_TRAS = 0.001    
+SENSIBILIDADE_PROJ_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_FRONTAL"]
+SENSIBILIDADE_PROJ_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_LATERAL"]
+SENSIBILIDADE_PROJ_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_TRAS"]
 
 contador_postura_ruim = 0 
 
 # 1 segundo = 15fps
-LIMIAR_FRAMES_FRONTAL = 30 
-LIMIAR_FRAMES_LATERAL = 30 
-LIMIAR_FRAMES_TRAS = 30 
+LIMIAR_FRAMES_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["LIMIAR_FRAMES_FRONTAL"]
+LIMIAR_FRAMES_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["LIMIAR_FRAMES_LATERAL"]
+LIMIAR_FRAMES_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["LIMIAR_FRAMES_TRAS"]
 
 buffer_registros = []
 
@@ -540,7 +603,8 @@ try:
         cv2.imshow("PosturAI - Camera", frame)
 
         # Always on top ativo
-        always_on_top()
+        if USER_CONFIG['interface']['janela_sempre_topo']:
+            always_on_top()
 
         # Contador de frames processados (útil para debug)
         frame_index += 1
@@ -567,4 +631,5 @@ df = pd.DataFrame(
 )
 df.to_csv("uso_postura.csv", index=False)
 
-gerar_relatorio_postura()
+if USER_CONFIG['interface']['gerar_grafico_apos_encerramento']:
+    gerar_relatorio_postura()
