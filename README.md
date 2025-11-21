@@ -39,7 +39,7 @@ Siga os passos abaixo para ter o PosturAI-Python rodando em sua máquina:
 
 ### 1. Clonar o Repositório
 ```bash
-git clone [https://github.com/FIAP-Global-Solution-2k25/PosturAI-Python.git](https://github.com/FIAP-Global-Solution-2k25/PosturAI-Python.git)
+git clone https://github.com/FIAP-Global-Solution-2k25/PosturAI-Python.git
 
 cd PosturAI-Python
 ````
