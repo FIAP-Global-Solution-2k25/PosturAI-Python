@@ -110,8 +110,9 @@ Após encerrar a captura:
 
 ## 👥 Autores
 
-- **Ulisses Ribeiro** — Desenvolvimento *core* e arquitetura técnica da solução em Visão Computacional.
-- **Arthur Berlofa Bosi** — Responsável pela integração IoT (ESP32) e pela gestão de configuração via arquivos JSON.
+- **Ulisses Ribeiro - RM562230** — Desenvolvimento *core* e arquitetura técnica da solução em Visão Computacional.
+- **Arthur Berlofa Bosi - RM564438** — Responsável pela integração IoT (ESP32) e pela gestão de configuração via arquivos JSON.
+- **Arthur Ferreira - RM564958** - Responsavel pela organização das pastas, e planejamento do software.
 
 ---
 
