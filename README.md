@@ -1,110 +1,9 @@
-# 📘 PosturAI – Monitoramento Inteligente de Postura com Visão Computacional
+# 🐍 PosturAI-Python: O seu Assistente de Postura com Inteligência Artificial
 
-O **PosturAI** é um sistema de monitoramento postural em tempo real que identifica padrões de postura inadequada, exibe alertas imediatos ao usuário e gera relatórios visuais avançados ao final da sessão.
+## 💡 Sobre o Projeto
+O **PosturAI-Python** é um projeto desenvolvido no âmbito da **FIAP Global Solution 2025** com o objetivo de combater os problemas de saúde relacionados à má postura durante longas jornadas de trabalho ou estudo.
 
-Ele combina **Visão Computacional (MediaPipe + OpenCV)**, técnicas profundas de **otimização de desempenho** e um **gráfico Radar 3D** elegante que resume todo o comportamento postural do usuário.
-
----
-
-## 🎯 Objetivo do Projeto
-
-O PosturAI foi desenvolvido para:
-
-- Detectar postura inadequada (frente, trás, lateral e distância).
-- Exibir alertas ao usuário de forma elegante e instantânea.
-- Registrar cada frame da sessão para análise posterior.
-- Gerar um **relatório gráfico 3D** intuitivo.
-- Suportar integração com Arduino para biofeedback vibratório.
-- Oferecer experiência fluida mesmo em máquinas modestas.
-
----
-
-## 🧠 Como o Sistema Funciona
-
-### **1️⃣ Captura e Processamento em Tempo Real**
-
-- Captura vídeo via OpenCV.
-- Processa landmarks com MediaPipe Pose.
-- Analisa posição da cabeça, orelhas, ombros e quadris.
-- Usa lógica geométrica + profundidade + filtros temporais para:
-  - Projeção frontal
-  - Projeção para trás
-  - Desvio lateral
-  - Distância da tela
-
----
-
-### **2️⃣ Alerta Visual Imediato**
-
-A janela do app possui:
-- Barra superior transparente
-- Texto automático das posturas incorretas
-- Cores verde/vermelho
-- Modo Always-on-Top garantido via Win32
-- Ícone personalizado da aplicação
-
----
-
-### **3️⃣ Relatório Final em Radar 3D**
-
-Após encerrar a captura:
-- Os dados são salvos em CSV.
-- Matplotlib (lazy load) gera um radar semi-3D com:
-  - Gradiente suave
-  - Pontos brancos
-  - Título formatado
-  - Labels reposicionados manualmente (topo, direita, baixo, esquerda)
-  - Canvas ampliado lateralmente
-- Percentuais calculados automaticamente.
-
----
-
-## ⚙️ Tecnologias Utilizadas
-
-| Tecnologia | Finalidade |
-|-----------|------------|
-| **Python** | Lógica geral |
-| **OpenCV** | Captura de vídeo + UI |
-| **MediaPipe Pose** | Identificação corporal |
-| **Matplotlib** | Radar 3D final |
-| **NumPy** | Cálculos numéricos |
-| **Pandas** | Registro do CSV |
-| **PyWin32** | Always-on-top + ícone |
-| **Arduino (opcional)** | Biofeedback vibratório |
-
----
-
-## 🧩 Destaques Técnicos
-
-### ✔ **Otimização Avançada**
-
-- Importações seletivas (`from cv2 import ...`)
-- `setUseOptimized(True)`
-- Threads controladas
-- Lazy load do Matplotlib
-- CSV gerado somente ao final
-- MediaPipe carregado uma vez
-
-### ✔ **Detecção Robusta**
-
-- Cálculo de ângulos
-- Média móvel com janelas deslizantes
-- Múltiplas verificações por postura
-- Tolerância reduzida para precisão
-
-### ✔ **Interface Profissional**
-
-- Barra superior com transparência
-- Janela com ícone customizado
-- Always-On-Top automático
-- Layout centralizado e elegante
-
-### ✔ **Relatório Premium**
-
-- Radar 3D com gradiente
-- Canvas expandido (left/right)
-- Pontos brancos e contorno roxo
-- Labels bem posicionadas
+Utilizando a visão computacional e modelos de *Machine Learning* para estimativa de pose, o PosturAI monitora em tempo real a postura do usuário através da webcam, fornecendo feedback imediato para correções. A má postura é um problema crescente na era do trabalho híbrido e remoto, e este projeto visa promover o bem-estar e a **ergonomia digital**.
 
 ---
 
@@ -116,26 +15,96 @@ Após encerrar a captura:
 
 ---
 
-## 📊 Exemplo do Relatório
-
-O Radar exibe:
-
-- % cabeça à frente
-- % cabeça atrás
-- % desvio lateral
-- % distância inadequada
-- Média geral de uso
-
-Perfeito para ergonomia, saúde ocupacional e produtividade.
+## ✨ Recursos Principais
+* **Detecção de Postura em Tempo Real:** Monitoramento contínuo usando a webcam.
+* **Estimativa de Pose:** Utiliza bibliotecas avançadas (como MediaPipe ou OpenPose) para mapear pontos-chave do corpo (ombros, pescoço, coluna).
+* **Feedback Visual e Sonoro:** Alertas discretos quando a postura ideal não é mantida por um período de tempo.
+* **Análise Ergonômica:** Avaliação de métricas chave de postura, como o alinhamento da cabeça e a curvatura da coluna.
 
 ---
 
-## 🔧 Instalação
+## 🛠️ Tecnologias Utilizadas
+O projeto é construído principalmente em Python, aproveitando o poder das seguintes bibliotecas:
+
+* **Python 3.x**
+* **OpenCV:** Para captura, exibição e processamento de vídeo da webcam.
+* **MediaPipe (ou similar):** Para a estimativa de pose e detecção de *landmarks*.
+* **NumPy:** Para manipulação eficiente de dados numéricos.
+
+---
+
+## 🚀 Instalação e Configuração
+
+Siga os passos abaixo para ter o PosturAI-Python rodando em sua máquina:
+
+### 1. Clonar o Repositório
+```bash
+git clone [https://github.com/FIAP-Global-Solution-2k25/PosturAI-Python.git](https://github.com/FIAP-Global-Solution-2k25/PosturAI-Python.git)
+
+cd PosturAI-Python
+````
+
+### 2\. Criar e Ativar o Ambiente Virtual
+
+É altamente recomendado o uso de um ambiente virtual para isolar as dependências.
+
+**Criar o ambiente virtual (venv):**
 
 ```bash
-pip install opencv-python
-pip install mediapipe==0.10.21
-pip install matplotlib
-pip install pandas
-pip install numpy
-pip install pywin32
+python -m venv venv
+```
+
+**Ativar o ambiente virtual no macOS/Linux:**
+
+```bash
+source venv/bin/activate
+```
+
+**Ativar o ambiente virtual no Windows (Prompt de Comando ou PowerShell):**
+
+```bash
+venv\Scripts\activate
+```
+
+### 3\. Instalar as Dependências
+
+Instale todas as bibliotecas necessárias listadas no arquivo `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4\. Executar o Aplicativo
+
+Após a instalação, execute o script principal para iniciar o monitoramento de postura via webcam:
+
+```bash
+python main.py
+# (Nota: o nome do arquivo principal pode ser ajustado conforme a estrutura final)
+```
+
+-----
+
+## 🤝 Contribuição
+
+Contribuições são o que tornam a comunidade de código aberto um lugar incrível para aprender, inspirar e criar. Qualquer contribuição que você fizer será **muito apreciada**.
+
+1.  Faça um **Fork** do Projeto.
+2.  Crie uma **Branch** para sua Feature (`git checkout -b feature/NovaFuncionalidade`).
+3.  Commit suas Mudanças (`git commit -m 'Adiciona NovaFuncionalidade'`).
+4.  Faça um **Push** para a Branch (`git push origin feature/NovaFuncionalidade`).
+5.  Abra um **Pull Request**.
+
+-----
+
+## 📜 Licença
+
+Este projeto está sob a licença **MIT**. Consulte o arquivo `LICENSE` no repositório para mais detalhes.
+
+-----
+
+<div align="center">
+  Desenvolvido para a Global Solution 2025 da FIAP.
+</div>
+
+Você pode encontrar mais informações sobre o conceito e os desafios da Global Solution da FIAP no site oficial: [Global Solution FIAP](https://www.fiap.com.br/graduacao/global-solution/?utm_term=&utm_campaign=GRAD+-+DSA&utm_source=adwords&utm_medium=ppc&hsa_acc=3358810376&hsa_cam=21102294227&hsa_grp=158449020381&hsa_ad=737370541126&hsa_src=g&hsa_tgt=dsa-2403784242683&hsa_kw=&hsa_mt=&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=21102294227&gbraid=0AAAAADqmiBBL0vsXCBVGF-uBG2qZC6mbY&gclid=CjwKCAiAlfvIBhA6EiwAcErpyZ9ifXZTOhMagASAJJAlFp0BM2fjwkvAjUnWgSHiFA5UMkvOpMlhyhoCflUQAvD_BwE).
