@@ -55,12 +55,14 @@ def comunicaESP32(status):
         }
     }
 
-    if status == 'on':
+    global historico_chair_state
+
+    if status == 'on' and historico_chair_state != 'on':
         try:
             requests.patch(url, headers=headers, json=payloadON)
         except Exception as e:
             print(e)
-    elif status == 'off':
+    elif status == 'off' and historico_chair_state != 'off':
         try:
             requests.patch(url, headers=headers, json=payloadOFF)
         except Exception as e:
@@ -100,6 +102,8 @@ def desenhar_barra_status(frame, status_dict):
         historico_vibrar.append(True if textos else False)
         #print(historico_vibrar)
 
+        # 1 segundo = 15fps
+        # Valor padrão: 150 - 10 segundos
         atraso_vibracao = USER_CONFIG['hardware']['atraso_vibracao']
 
         if all(historico_vibrar[-atraso_vibracao:]):
@@ -113,6 +117,7 @@ def desenhar_barra_status(frame, status_dict):
 
     # Adiciona entre as posturas ruins uma barra vertical, se não, postura ok
     texto_final = " | ".join(textos) if textos else "Postura OK"
+    textos = []
 
 
     # Define as cores dos textos, se tiver um item na lista vermelho, se não postura ta boa (cor verde)
@@ -281,6 +286,7 @@ historico_frontal = []
 historico_lateral = []
 historico_tras = []
 historico_vibrar = []
+historico_chair_state = 'off'
 
 # JSON com as configurações do usuário
 USER_CONFIG = le_json("preferences.json")
@@ -338,14 +344,14 @@ CONFIGURACOES_SENSIBILIDADE = {
 }
 
 # Como se fosse uma janela, você só vê o que está dentro dela, e o que está fora desaparece.
-TAMANHO_JANELA_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_FRONTAL"]
-TAMANHO_JANELA_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_LATERAL"]
-TAMANHO_JANELA_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_TRAS"]
+TAMANHO_JANELA_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_FRONTAL"]
+TAMANHO_JANELA_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_LATERAL"]
+TAMANHO_JANELA_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_TRAS"]
 
 # Limite que diferencia a cabeça normal da inclinada
-SENSIBILIDADE_PROJ_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_FRONTAL"]
-SENSIBILIDADE_PROJ_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_LATERAL"]
-SENSIBILIDADE_PROJ_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["TAMANHO_JANELA_TRAS"]
+SENSIBILIDADE_PROJ_FRONTAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_FRONTAL"]
+SENSIBILIDADE_PROJ_LATERAL = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_LATERAL"]
+SENSIBILIDADE_PROJ_TRAS = CONFIGURACOES_SENSIBILIDADE[USER_CONFIG["sensibilidade"]]["SENSIBILIDADE_PROJ_TRAS"]
 
 contador_postura_ruim = 0 
 
@@ -365,7 +371,8 @@ pose = mp_pose.Pose(
 )
 
 try: # Tenta realizar a abertura da webcam
-    cam = cv2.VideoCapture(0, cv2.CAP_DSHOW) # Abre a webcam principal
+    id_webcam = USER_CONFIG['interface']['id_webcam']
+    cam = cv2.VideoCapture(id_webcam, cv2.CAP_DSHOW) # Abre a webcam principal
 
     if not cam.isOpened(): # Caso ela não tenha sido aberta, da um raise com uma mensagem educativa
         raise Exception("Erro ao abrir a câmera.")
