@@ -105,7 +105,8 @@ Este projeto está sob a licença **MIT**. Consulte o arquivo `LICENSE` no repos
 
 <div align="center">
   Desenvolvido para a Global Solution 2025 da FIAP.
-  Você pode encontrar mais informações sobre a Global Solution da FIAP no site oficial: [Global Solution FIAP](https://www.fiap.com.br/graduacao/global-solution/?utm_term=&utm_campaign=GRAD+-+DSA&utm_source=adwords&utm_medium=ppc&hsa_acc=3358810376&hsa_cam=21102294227&hsa_grp=158449020381&hsa_ad=737370541126&hsa_src=g&hsa_tgt=dsa-2403784242683&hsa_kw=&hsa_mt=&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=21102294227&gbraid=0AAAAADqmiBBL0vsXCBVGF-uBG2qZC6mbY&gclid=CjwKCAiAlfvIBhA6EiwAcErpyZ9ifXZTOhMagASAJJAlFp0BM2fjwkvAjUnWgSHiFA5UMkvOpMlhyhoCflUQAvD_BwE).
+  
+  Você pode encontrar mais informações sobre a Global Solution da FIAP no site oficial: <a href="https://www.fiap.com.br/graduacao/global-solution/?utm_term=&utm_campaign=GRAD+-+DSA&utm_source=adwords&utm_medium=ppc&hsa_acc=3358810376&hsa_cam=21102294227&hsa_grp=158449020381&hsa_ad=737370541126&hsa_src=g&hsa_tgt=dsa-2403784242683&hsa_kw=&hsa_mt=&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=21102294227&gbraid=0AAAAADqmiBBL0vsXCBVGF-uBG2qZC6mbY&gclid=CjwKCAiAlfvIBhA6EiwAcErpyZ9ifXZTOhMagASAJJAlFp0BM2fjwkvAjUnWgSHiFA5UMkvOpMlhyhoCflUQAvD_BwE">Global Solution FIAP</a>
 </div>
 
 
